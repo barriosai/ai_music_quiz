@@ -1,9 +1,7 @@
-# app.py
 from openai import OpenAI
 import streamlit as st
 import openai
-import time
-
+import random
 
 # Function to retrieve the API key
 def get_api_key():
@@ -14,40 +12,76 @@ api_key = get_api_key()
 openai.api_key = api_key
 
 
-# Function to get a GPT response
+# Define all major triads
+major_triads = {
+    'C': ['C', 'E', 'G'],
+    'C#': ['C#', 'E#', 'G#'],
+    'Db': ['Db', 'F', 'Ab'],
+    'D': ['D', 'F#', 'A'],
+    'D#': ['D#', 'Fx', 'A#'],
+    'Eb': ['Eb', 'G', 'Bb'],
+    'E': ['E', 'G#', 'B'],
+    'F': ['F', 'A', 'C'],
+    'F#': ['F#', 'A#', 'C#'],
+    'Gb': ['Gb', 'Bb', 'Db'],
+    'G': ['G', 'B', 'D'],
+    'G#': ['G#', 'B#', 'D#'],
+    'Ab': ['Ab', 'C', 'Eb'],
+    'A': ['A', 'C#', 'E'],
+    'A#': ['A#', 'Cx', 'E#'],
+    'Bb': ['Bb', 'D', 'F'],
+    'B': ['B', 'D#', 'F#']
+}
 client = OpenAI(api_key=st.secrets["api_key"])
-def get_gpt_response(question):
+def get_hint(triad):
     completion = client.chat.completions.create(
-        model="gpt-4o",
-        messages=[
-            {"role": "system", "content": "You are a magic 8-ball. Respond to questions with brief, concise spooky and mean answers."},
-            {"role": "user", "content": question}
-        ]
-    )
+      model="gpt-4o",
+      messages=[
+       {"role": "system", "content": "You are a music teacher, skilled in explaining music theory and programming with a creative flair."},
+       {"role": "user", "content": f"Can you give me a hint for identifying the notes in the {triad} major triad? Don't give it away just help with a good educational hint. Just give the hint, don't reply with Certainly, just the hint."}
+])
+
     return completion.choices[0].message.content.strip()
 
+def quiz_major_triads_with_hints():
+    st.title("Major Triads Quiz with AI Hints")
+    st.write("You will be asked to enter the notes in various major triads.")
+    st.write("Please enter the notes separated by commas and spaces (e.g., C, E, G).")
 
+    if 'correct_answers' not in st.session_state:
+        st.session_state.correct_answers = 0
+    if 'total_questions' not in st.session_state:
+        st.session_state.total_questions = 0
+    if 'current_key' not in st.session_state:
+        st.session_state.current_key = random.choice(list(major_triads.keys()))
+    if 'continue_quiz' not in st.session_state:
+        st.session_state.continue_quiz = True
 
-# Streamlit app
-st.title("🔮 Magic 8-Ball")
+    if st.session_state.continue_quiz:
+        current_key = st.session_state.current_key
+        hint = get_hint(current_key)
+        st.write(f"Hint: {hint}")
+        
+        answer = st.text_input(f"What are the notes in the {current_key} major triad?", key="answer")
+        
+        if st.button("Submit Answer"):
+            answer_list = [note.strip() for note in answer.split(',')]
+            if answer_list == major_triads[current_key]:
+                st.write("Correct!")
+                st.session_state.correct_answers += 1
+            else:
+                correct_order = ', '.join(major_triads[current_key])
+                st.write(f"Incorrect. The correct notes are {correct_order}")
 
-# Ask the user to enter a question
-question = st.text_input("Ask the Magic 8-Ball a question:")
+            st.session_state.total_questions += 1
+            st.session_state.current_key = random.choice(list(major_triads.keys()))
+            st.experimental_rerun()
 
-# Placeholder for the response
-response_placeholder = st.empty()
+        if st.button("End Quiz"):
+            st.session_state.continue_quiz = False
+            st.write(f"\nYou got {st.session_state.correct_answers} out of {st.session_state.total_questions} correct.")
+            st.session_state.correct_answers = 0
+            st.session_state.total_questions = 0
 
-# Display button with 8-Ball emoji
-if st.button("🎱 Click the 8-Ball to get your answer!"):
-    if question.strip() == "":
-        st.warning("Please ask a question before clicking the 8-Ball.")
-    else:
-        with st.spinner("The Magic 8-Ball is thinking..."):
-            time.sleep(2)  # Simulate thinking time
-            try:
-                answer = get_gpt_response(question)
-                response_placeholder.markdown(f"<div style='font-size:24px; text-align:center;'>{answer}</div>", unsafe_allow_html=True)
-                time.sleep(5)
-                response_placeholder.empty()  # Clear the response after 5 seconds
-            except Exception as e:
-                st.error(f"An error occurred: {e}")
+# Start the quiz
+quiz_major_triads_with_hints()
