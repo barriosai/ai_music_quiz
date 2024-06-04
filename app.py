@@ -18,7 +18,7 @@ openai.api_key = api_key
 client = OpenAI(api_key=st.secrets["api_key"])
 def get_gpt_response(question):
     completion = client.chat.completions.create(
-        model="gpt-4",
+        model="gpt-4o",
         messages=[
             {"role": "system", "content": "You are a magic 8-ball. Respond to questions with brief, concise spooky and mean answers."},
             {"role": "user", "content": question}
