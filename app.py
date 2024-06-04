@@ -32,9 +32,9 @@ major_triads = {
     'Bb': ['Bb', 'D', 'F'],
     'B': ['B', 'D#', 'F#']
 }
-client = OpenAI(api_key=st.secrets["api_key"])
+
 def get_hint(triad):
-    completion = client.chat.completions.create(
+    completion = openai.chat.completions.create(
       model="gpt-4o",
       messages=[
        {"role": "system", "content": "You are a music teacher, skilled in explaining music theory and programming with a creative flair."},
